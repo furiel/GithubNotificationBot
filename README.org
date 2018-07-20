@@ -1,0 +1,14 @@
+* Github Notifification Bot
+
+The purpose of this project is to create a telegram bot that collects github notifications, and sends them to a chat room.
+
+* Deployment
+** Dependencies
+   - python3
+   - [[http://docs.hylang.org/en/stable/][hy3]]
+
+** Installation
+   - Install syslog-ng (=< 3.16) :)
+   - Copy the configuration file into etc
+   - Copy the hy script into sbin
+   - Edit configuration: insert github api user and api key, telegram api key and chat id.

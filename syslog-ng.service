@@ -1,0 +1,12 @@
+[Unit]
+Description=syslog-ng
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/syslog-ng/sbin
+ExecStart=/opt/syslog-ng/sbin/syslog-ng -Fevd
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
