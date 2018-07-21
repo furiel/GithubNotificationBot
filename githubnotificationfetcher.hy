@@ -5,15 +5,17 @@
 (import base64)
 (import sys)
 
+(defn format-single-notification [notification]
+  (urllib.parse.quote
+    (.format "title: {}\ntype: {}\nurl: {}"
+             (get notification "subject" "title")
+             (get notification "subject" "type")
+             (get notification "subject" "url"))))
+
+
 (defn format-notifications [notifications-json]
   (setv notifications (json.loads (.decode notifications-json "utf-8")))
-  (for [notification notifications]
-    (print
-      (urllib.parse.quote
-        (.format "title: {}\ntype: {}\nurl: {}"
-                 (get notification "subject" "title")
-                 (get notification "subject" "type")
-                 (get notification "subject" "url"))))))
+  (.join "\n" (map format-single-notification notifications)))
 
 (defclass GithubConnection [object]
   (defn --init-- [self username api-token]
@@ -45,7 +47,7 @@
 (defn fetch-notifications [username api-token]
   (setv githubconn (GithubConnection username api-token))
   (.connect githubconn)
-  (format-notifications (.request githubconn "/notifications"))
+  (print (format-notifications (.request githubconn "/notifications")))
   (.request githubconn "/notifications" :method "PUT")
   (.disconnect githubconn))
 
