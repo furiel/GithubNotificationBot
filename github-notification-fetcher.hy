@@ -48,7 +48,7 @@
      (do ~@body
          (time.sleep ~seconds))))
 
-(defn main []
+(defmain [&rest args]
   (time.sleep 120)
 
   (setv username (get sys.argv 1)
@@ -58,6 +58,3 @@
     300
    (fetch-notifications username api-token)
    (sys.stdout.flush)))
-
-(when (= __name__ "__main__")
-  (main))
