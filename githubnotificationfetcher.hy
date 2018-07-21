@@ -40,7 +40,7 @@
 
     (if (= 2 (// (int response.status) 100))
         (response.read)
-        (response.reason))))
+        response.reason)))
 
 (defn fetch-notifications [username api-token]
   (setv githubconn (GithubConnection username api-token))
