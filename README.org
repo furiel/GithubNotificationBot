@@ -12,3 +12,7 @@ The purpose of this project is to create a telegram bot that collects github not
    - Copy the configuration file into etc
    - Copy the hy script into sbin
    - Edit configuration: insert github api user and api key, telegram api key and chat id.
+* Tests
+#+BEGIN_SRC sh
+pytest .
+#+END_SRC
