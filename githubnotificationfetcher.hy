@@ -15,29 +15,39 @@
                  (get notification "subject" "type")
                  (get notification "subject" "url"))))))
 
+(defclass GithubConnection [object]
+  (defn --init-- [self username api-token]
+    (setv basic-auth-secret
+          (.decode
+            (base64.b64encode
+              (.encode (.format "{}:{}" username api-token)))))
+    (setv self.headers
+          {"Content-type" "application/x-www-form-urlencoded"
+           "Accept" "application/json"
+           "User-Agent" "notification-bot"
+           "Authorization" (.format "Basic {}" basic-auth-secret) }))
+
+  (defn connect [self &optional [host "api.github.com"] [context None]]
+    (setv self.conn (http.client.HTTPSConnection host :context context))
+    self.conn)
+
+  (defn disconnect [self]
+    (.close self.conn))
+
+  (defn request [self url &optional [method "GET"]]
+    (.request self.conn :method method :url url :headers self.headers)
+    (setv response (.getresponse self.conn))
+
+    (if (= 2 (// (int response.status) 100))
+        (response.read)
+        (response.reason))))
+
 (defn fetch-notifications [username api-token]
-  (setv basic-auth-secret
-        (.decode
-          (base64.b64encode
-                   (.encode (.format "{}:{}" username api-token)))))
-
-  (setv headers
-        {"Content-type" "application/x-www-form-urlencoded"
-         "Accept" "application/json"
-         "User-Agent" "notification-bot"
-         "Authorization" (.format "Basic {}" basic-auth-secret) })
-
-  (setv conn (http.client.HTTPSConnection "api.github.com"))
-  (.request conn :method "GET" :url "/notifications" :headers headers)
-
-  (setv response (.getresponse conn))
-
-  (if (= 2 (// (int response.status) 100))
-      (do
-        (format-notifications (response.read))
-        (.request conn :method "PUT" :url "/notifications" :headers headers))
-      (urllib.parse.quote response.reason))
-  (.close conn))
+  (setv githubconn (GithubConnection username api-token))
+  (.connect githubconn)
+  (format-notifications (.request githubconn "/notifications"))
+  (.request githubconn "/notifications" :method "PUT")
+  (.disconnect githubconn))
 
 (defmacro loop [&rest body]
   `(while 1
