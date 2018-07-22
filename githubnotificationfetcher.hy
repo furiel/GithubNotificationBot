@@ -5,17 +5,29 @@
 (import base64)
 (import sys)
 
-(defn format-single-notification [notification]
+(defn format-single-notification [notification githubconn]
+
+  (setv latest-comment-url
+        (.
+          (urllib.parse.urlparse
+            (get notification "subject" "latest_comment_url")) path))
+
+  (setv latest-comment
+        (json.loads
+          (.decode
+            (.request githubconn latest-comment-url) "utf-8")))
+
   (urllib.parse.quote
-    (.format "title: {}\ntype: {}\nurl: {}"
+    (.format "title: {}\ntype: {}\nuser: {}\nmessage: {}\nlink: {}\n"
              (get notification "subject" "title")
              (get notification "subject" "type")
-             (get notification "subject" "url"))))
+             (get latest-comment "user" "login")
+             (get latest-comment "body")
+             (get latest-comment "html_url"))))
 
-
-(defn format-notifications [notifications-json]
+(defn format-notifications [notifications-json githubconn]
   (setv notifications (json.loads (.decode notifications-json "utf-8")))
-  (.join "\n" (map format-single-notification notifications)))
+  (.join "\n" (map format-single-notification notifications (repeat githubconn))))
 
 (defclass GithubConnection [object]
   (defn --init-- [self username api-token]
@@ -47,7 +59,12 @@
 (defn fetch-notifications [username api-token]
   (setv githubconn (GithubConnection username api-token))
   (.connect githubconn)
-  (print (format-notifications (.request githubconn "/notifications")))
+
+  (print
+    (format-notifications
+      (.request githubconn "/notifications")
+      githubconn))
+
   (.request githubconn "/notifications" :method "PUT")
   (.disconnect githubconn))
 
