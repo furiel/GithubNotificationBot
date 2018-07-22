@@ -1,0 +1,8 @@
+{
+  "html_url": "https://localhost:5555/comment_url",
+  "user": {
+    "login": "test_username",
+    "avatar_url": "https://localhost:5555/avatar"
+  },
+  "body": "comment_body"
+}

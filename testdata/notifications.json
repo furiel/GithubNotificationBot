@@ -2,8 +2,8 @@
   {
     "subject": {
       "title": "test_title",
-      "url": "https://localhost/test_url",
-      "latest_comment_url": "https://localhost/last_comment",
+      "url": "https://localhost:5555/test_url",
+      "latest_comment_url": "https://localhost:5555/latest_comment_url",
       "type": "PullRequest"
     }
   }
