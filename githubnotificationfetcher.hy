@@ -25,9 +25,9 @@
              (get latest-comment "body")
              (get latest-comment "html_url"))))
 
-(defn format-notifications [notifications-json githubconn]
+(defn parse-notifications [notifications-json githubconn]
   (setv notifications (json.loads (.decode notifications-json "utf-8")))
-  (.join "\n" (map format-single-notification notifications (repeat githubconn))))
+  (lfor notification notifications (format-single-notification notification githubconn)))
 
 (defclass GithubConnection [object]
   (defn --init-- [self username api-token]
@@ -60,13 +60,15 @@
   (setv githubconn (GithubConnection username api-token))
   (.connect githubconn)
 
-  (print
-    (format-notifications
-      (.request githubconn "/notifications")
-      githubconn))
+  (setv notifications
+        (parse-notifications
+          (.request githubconn "/notifications")
+          githubconn))
 
   (.request githubconn "/notifications" :method "PUT")
-  (.disconnect githubconn))
+  (.disconnect githubconn)
+
+  notifications)
 
 (defmacro loop [&rest body]
   `(while 1
@@ -85,5 +87,6 @@
 
   (periodically
     300
-   (fetch-notifications username api-token)
+   (for [notification (fetch-notifications username api-token)]
+     (print notification))
    (sys.stdout.flush)))
