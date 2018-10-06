@@ -16,13 +16,12 @@
           (.decode
             (.request githubconn latest-comment-url) "utf-8")))
 
-  (urllib.parse.quote
-    (.format "title: {}\ntype: {}\nuser: {}\nmessage: {}\nlink: {}\n"
+  (.format "title: {}\ntype: {}\nuser: {}\nmessage: {}\nlink: {}\n"
              (get notification "subject" "title")
              (get notification "subject" "type")
              (get latest-comment "user" "login")
              (get latest-comment "body")
-             (get latest-comment "html_url"))))
+             (get latest-comment "html_url")))
 
 (defn parse-notifications [notifications-json githubconn]
   (setv notifications (json.loads (.decode notifications-json "utf-8")))
