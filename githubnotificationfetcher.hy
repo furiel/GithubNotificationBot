@@ -3,7 +3,6 @@
 (import urllib.parse)
 (import http.client urllib.parse)
 (import base64)
-(import sys)
 
 (defn format-single-notification [notification githubconn]
 
@@ -69,24 +68,3 @@
   (.disconnect githubconn)
 
   notifications)
-
-(defmacro loop [&rest body]
-  `(while 1
-     (do ~@body)))
-
-(defmacro periodically [seconds &rest body]
-  `(loop
-     (do ~@body
-         (time.sleep ~seconds))))
-
-(defmain [&rest args]
-  (time.sleep 120)
-
-  (setv username (get sys.argv 1)
-        api-token (get sys.argv 2))
-
-  (periodically
-    300
-   (for [notification (fetch-notifications username api-token)]
-     (print notification))
-   (sys.stdout.flush)))
