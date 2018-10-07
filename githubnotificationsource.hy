@@ -1,6 +1,7 @@
 (import sys)
 (import syslogng threading)
 (import githubnotificationfetcher)
+(import traceback)
 
 (defclass GithubNotificationSource [syslogng.LogSource]
   (defn init [self options]
@@ -14,9 +15,12 @@
   (defn run [self]
     (while (not self.exit)
 
-      (for [notification (githubnotificationfetcher.fetch-notifications self.username self.api-token)]
-        (self.post_message (syslogng.LogMessage notification)))
-      (sys.stdout.flush)
+      (try
+        (for [notification (githubnotificationfetcher.fetch-notifications self.username self.api-token)]
+          (self.post_message (syslogng.LogMessage notification)))
+        (sys.stdout.flush)
+        (except [e Exception]
+          (traceback.print_exc)))
 
       (self.event.wait 300)))
 
