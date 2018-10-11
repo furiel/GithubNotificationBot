@@ -47,7 +47,7 @@ def http_server():
 def test_format_notification(http_server):
     githubconn = GithubConnection("testuser", "testpass")
     githubconn.connect("localhost:5555", context=ssl._create_unverified_context())
-    result = format_notifications(githubconn.request("/notifications"), githubconn)
-    assert "test_title" in result
-    assert "comment_body" in result
+    notifications = parse_notifications(githubconn.request("/notifications"), githubconn)
+    assert "test_title" in notifications[0]
+    assert "comment_body" in notifications[0]
     githubconn.disconnect()

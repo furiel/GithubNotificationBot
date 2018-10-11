@@ -3,7 +3,6 @@
 (import urllib.parse)
 (import http.client urllib.parse)
 (import base64)
-(import sys)
 
 (defn format-single-notification [notification githubconn]
 
@@ -17,17 +16,16 @@
           (.decode
             (.request githubconn latest-comment-url) "utf-8")))
 
-  (urllib.parse.quote
-    (.format "title: {}\ntype: {}\nuser: {}\nmessage: {}\nlink: {}\n"
+  (.format "title: {}\ntype: {}\nuser: {}\nmessage: {}\nlink: {}\n"
              (get notification "subject" "title")
              (get notification "subject" "type")
              (get latest-comment "user" "login")
              (get latest-comment "body")
-             (get latest-comment "html_url"))))
+             (get latest-comment "html_url")))
 
-(defn format-notifications [notifications-json githubconn]
+(defn parse-notifications [notifications-json githubconn]
   (setv notifications (json.loads (.decode notifications-json "utf-8")))
-  (.join "\n" (map format-single-notification notifications (repeat githubconn))))
+  (lfor notification notifications (format-single-notification notification githubconn)))
 
 (defclass GithubConnection [object]
   (defn --init-- [self username api-token]
@@ -60,30 +58,12 @@
   (setv githubconn (GithubConnection username api-token))
   (.connect githubconn)
 
-  (print
-    (format-notifications
-      (.request githubconn "/notifications")
-      githubconn))
+  (setv notifications
+        (parse-notifications
+          (.request githubconn "/notifications")
+          githubconn))
 
   (.request githubconn "/notifications" :method "PUT")
-  (.disconnect githubconn))
+  (.disconnect githubconn)
 
-(defmacro loop [&rest body]
-  `(while 1
-     (do ~@body)))
-
-(defmacro periodically [seconds &rest body]
-  `(loop
-     (do ~@body
-         (time.sleep ~seconds))))
-
-(defmain [&rest args]
-  (time.sleep 120)
-
-  (setv username (get sys.argv 1)
-        api-token (get sys.argv 2))
-
-  (periodically
-    300
-   (fetch-notifications username api-token)
-   (sys.stdout.flush)))
+  notifications)

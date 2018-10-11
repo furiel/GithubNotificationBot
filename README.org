@@ -6,11 +6,13 @@ The purpose of this project is to create a telegram bot that collects github not
 ** Dependencies
    - python3
    - [[http://docs.hylang.org/en/stable/][hy3]]
+   - syslog-ng (>= 3.18)
 
 ** Installation
-   - Install syslog-ng (=< 3.16) :)
+   - Install syslog-ng (=> 3.18)
    - Copy the configuration file into etc
-   - Copy the hy script into sbin
+   - Copy the hy scripts into sbin
+   - Alternatively you work from a git clone, but setting PYTHONPATH in the service file.
    - Edit configuration: insert github api user and api key, telegram api key and chat id.
 * Tests
 #+BEGIN_SRC sh
