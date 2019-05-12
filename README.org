@@ -18,3 +18,5 @@ The purpose of this project is to create a telegram bot that collects github not
 #+BEGIN_SRC sh
 pytest .
 #+END_SRC
+
+test
