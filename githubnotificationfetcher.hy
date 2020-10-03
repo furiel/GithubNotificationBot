@@ -16,12 +16,19 @@
           (.decode
             (.request githubconn latest-comment-url) "utf-8")))
 
-  (.format "title: {}\ntype: {}\nuser: {}\nmessage: {}\nlink: {}\n"
-             (get notification "subject" "title")
-             (get notification "subject" "type")
-             (get latest-comment "user" "login")
-             (get latest-comment "body")
-             (get latest-comment "html_url")))
+  ;; Simple way of throttling: github terminates connection if too many messages are sent at once
+  (time.sleep 1)
+  (try
+    (.format "title: {}\ntype: {}\nuser: {}\nmessage: {}\nlink: {}\n"
+               (get notification "subject" "title")
+               (get notification "subject" "type")
+               (get latest-comment "user" "login")
+               (get latest-comment "body")
+               (get latest-comment "html_url"))
+    (except [e Exception]
+      (print "Exception occured" notification latest-comment e :flush True)
+      (.format "notification: {} latest-comment: {} exception: {}" notification latest-comment e))))
+
 
 (defn parse-notifications [notifications-json githubconn]
   (setv notifications (json.loads (.decode notifications-json "utf-8")))
