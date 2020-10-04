@@ -4,6 +4,10 @@
 (import http.client urllib.parse)
 (import base64)
 
+(defn to-string [x]
+  (or (and (isinstance x str) x)
+      (and (isinstance x bytes) (.decode x))))
+
 (defn format-single-notification [notification githubconn]
 
   (setv latest-comment-url
@@ -13,8 +17,7 @@
 
   (setv latest-comment
         (json.loads
-          (.decode
-            (.request githubconn latest-comment-url) "utf-8")))
+          (.request githubconn latest-comment-url)))
 
   ;; Simple way of throttling: github terminates connection if too many messages are sent at once
   (time.sleep 1)
@@ -31,7 +34,7 @@
 
 
 (defn parse-notifications [notifications-json githubconn]
-  (setv notifications (json.loads (.decode notifications-json "utf-8")))
+  (setv notifications (json.loads notifications-json))
   (lfor notification notifications (format-single-notification notification githubconn)))
 
 (defclass GithubConnection [object]
@@ -58,7 +61,7 @@
     (setv response (.getresponse self.conn))
 
     (if (= 2 (// (int response.status) 100))
-        (response.read)
+        (to-string (response.read))
         response.reason)))
 
 (defn fetch-notifications [username api-token]
