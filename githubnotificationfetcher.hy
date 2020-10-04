@@ -3,6 +3,7 @@
 (import urllib.parse)
 (import http.client urllib.parse)
 (import base64)
+(import collections)
 
 (defn to-string [x]
   (or (and (isinstance x str) x)
@@ -15,9 +16,14 @@
           (urllib.parse.urlparse
             (get notification "subject" "latest_comment_url")) path))
 
+  (setv latest-comment-response (.request githubconn latest-comment-url))
+
   (setv latest-comment
-        (json.loads
-          (.request githubconn latest-comment-url)))
+        (try
+          (json.loads latest-comment-response)
+          (except [e Exception]
+            (print "Exception occured while parsing latest comment:" latest-comment-url latest-comment-response e :flush True)
+            {"user" {"login" "unknown"} "body" "unknown" "html_url" "unknown"})))
 
   ;; Simple way of throttling: github terminates connection if too many messages are sent at once
   (time.sleep 1)
