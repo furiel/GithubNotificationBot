@@ -63,12 +63,19 @@
     (.close self.conn))
 
   (defn request [self url &optional [method "GET"]]
-    (.request self.conn :method method :url url :headers self.headers)
-    (setv response (.getresponse self.conn))
+    (try
+      (.request self.conn :method method :url url :headers self.headers)
+      (setv response (.getresponse self.conn))
+      (setv status (int response.status))
+      (setv response-string (to-string (response.read)))
+      (setv reason response.reason)
 
-    (if (= 2 (// (int response.status) 100))
-        (to-string (response.read))
-        response.reason)))
+      (if (= 2 (// status 100))
+          response-string
+          reason)
+      (except [e Exception]
+        (print "Exception during fetch: " url status response-string e :flush True)
+        "Fetch failed"))))
 
 (defn fetch-notifications [username api-token]
   (setv githubconn (GithubConnection username api-token))
