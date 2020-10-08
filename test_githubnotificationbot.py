@@ -3,6 +3,7 @@ import pytest, os.path, threading, ssl
 from githubnotificationfetcher import *
 from http.server import HTTPServer, SimpleHTTPRequestHandler, HTTPStatus
 
+
 # given a pem file ... openssl req -new -x509 -keyout yourpemfile.pem -out yourpemfile.pem -days 365 -nodes
 class HttpServerSimulator(object):
     def __init__(self):
@@ -17,6 +18,7 @@ class HttpServerSimulator(object):
     def stop(self):
         self.httpd.shutdown()
         self.httpserver.join()
+
 
 class HttpRequestHandlerSimulator(SimpleHTTPRequestHandler):
     def do_GET(self):
@@ -37,12 +39,14 @@ class HttpRequestHandlerSimulator(SimpleHTTPRequestHandler):
 
         return
 
+
 @pytest.fixture
 def http_server():
     httpserver =  HttpServerSimulator()
     httpserver.start()
     yield httpserver
     httpserver.stop()
+
 
 def test_format_notification(http_server):
     githubconn = GithubConnection("testuser", "testpass")
@@ -51,3 +55,19 @@ def test_format_notification(http_server):
     assert "test_title" in notifications[0]
     assert "comment_body" in notifications[0]
     githubconn.disconnect()
+
+
+def test_freshly_opened_pull_request():
+    # Fresh PR-s do not contain latest_comment_url
+    notification_string = """
+    {
+        "subject": {
+        "title": "title-of-new-pr",
+        "url": "url-of-new-pr",
+        "latest_comment_url": null,
+        "type": "PullRequest"
+        }
+    }"""
+    single_notification = json.loads(notification_string)
+    formatted = format_single_notification(single_notification, None)
+    assert formatted == "title: title-of-new-pr\ntype: PullRequest\n"

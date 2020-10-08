@@ -4,39 +4,45 @@
 (import http.client urllib.parse)
 (import base64)
 (import collections)
+(require [hy.extra.anaphoric [*]])
 
 (defn to-string [x]
   (or (and (isinstance x str) x)
       (and (isinstance x bytes) (.decode x))))
 
-(defn format-single-notification [notification githubconn]
-
-  (setv latest-comment-url
-        (.
-          (urllib.parse.urlparse
-            (get notification "subject" "latest_comment_url")) path))
-
-  (setv latest-comment-response (.request githubconn latest-comment-url))
+(defn get-latest-comment [url-raw githubconn]
+  (setv url (. (urllib.parse.urlparse url-raw) path)
+        latest-comment-response (.request githubconn url))
 
   (setv latest-comment
         (try
           (json.loads latest-comment-response)
           (except [e Exception]
-            (print "Exception occured while parsing latest comment:" latest-comment-url latest-comment-response e :flush True)
-            {"user" {"login" "unknown"} "body" "unknown" "html_url" "unknown"})))
+            (print "Exception occured while parsing latest comment:" latest-comment-url latest-comment-response e :flush True))))
 
-  ;; Simple way of throttling: github terminates connection if too many messages are sent at once
-  (time.sleep 1)
   (try
-    (.format "title: {}\ntype: {}\nuser: {}\nmessage: {}\nlink: {}\n"
-               (get notification "subject" "title")
-               (get notification "subject" "type")
-               (get latest-comment "user" "login")
-               (get latest-comment "body")
-               (get latest-comment "html_url"))
+    (.format "user: {}\nmessage: {}\nlink: {}\n"
+             (get latest-comment "user" "login")
+             (get latest-comment "body")
+             (get latest-comment "html_url"))
     (except [e Exception]
-      (print "Exception occured" notification latest-comment e :flush True)
-      (.format "notification: {} latest-comment: {} exception: {}" notification latest-comment e))))
+      (print "Exception while formatting latest comment" latest-comment-url latest-comment-response e :flush True)
+      "")))
+
+(defn format-single-notification [notification githubconn]
+  (setv
+    latest-comment-url (get notification "subject" "latest_comment_url")
+    latest-comment (ap-if latest-comment-url (get-latest-comment it githubconn) "")
+    formatted-notification
+    (try
+      (.format "title: {}\ntype: {}\n"
+               (get notification "subject" "title")
+               (get notification "subject" "type"))
+      (except [e Exception]
+        (print "Exception occured while formatting notification" notification e :flush True)
+        "exception occured\n")))
+
+  (.format "{}{}" formatted-notification latest-comment))
 
 
 (defn parse-notifications [notifications-json githubconn]
@@ -64,6 +70,8 @@
 
   (defn request [self url &optional [method "GET"]]
     (try
+      ;; Simple way of throttling: github terminates connection if too many messages are sent at once
+      (time.sleep 1)
       (.request self.conn :method method :url url :headers self.headers)
       (setv response (.getresponse self.conn))
       (setv status (int response.status))
